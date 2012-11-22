@@ -1,0 +1,11 @@
+# sbt
+/target
+/project/target
+/project/project/target
+
+# eclipse
+.cache
+.classpath
+.project
+.settings/org.scala-ide.sdt.core.prefs
+
