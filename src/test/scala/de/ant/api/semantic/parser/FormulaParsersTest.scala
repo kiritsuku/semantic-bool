@@ -33,6 +33,25 @@ class FormulaParsersTest extends FlatSpec with FormulaParsers with SemanticBehav
     assert(show(formula("a + b")) === "a ∨ b")
   }
 
+  it should "parse nested formula" in {
+    assert(show(formula("abcd")) === "abcd")
+    assert(show(formula("a ∨ b ∨ c ∨ d")) === "a ∨ b ∨ c ∨ d")
+    assert(show(formula("a → b → c → d")) === "((a → b) → c) → d")
+    assert(show(formula("a ↔ b ↔ c ↔ d")) === "((a ↔ b) ↔ c) ↔ d")
+    assert(show(formula("a ⊕ b ⊕ c ⊕ d")) === "((a ⊕ b) ⊕ c) ⊕ d")
+  }
+
+  it should "parse parentheses" in {
+    assert(show(formula("(ab)")) === "ab")
+//    assert(show(formula("(ab)(cd)")) === "abcd")
+//    assert(show(formula("((ab)c)d")) === "abcd")
+//    assert(show(formula("a(b(cd))")) === "abcd")
+  }
+
+  it should "parse combinations of formulas" in {
+//    assert(show(formula("ab ∨ ab")) === "ab ∨ ab")
+  }
+
   def formula(in: String): Formula =
-    parseFormula(in).getOrElse(sys.error("omg"))
+    parseFormula(in).fold(sys.error, identity)
 }
