@@ -1,7 +1,6 @@
 package de.ant.semantic.formula
 
 trait Formulas {
-
   sealed abstract class Formula {
     final def ∧(a: Formula) = new ∧(this, a)
     final def and(a: Formula) = ∧(a)
@@ -24,12 +23,16 @@ trait Formulas {
   case class Atom(symbol: Symbol) extends Formula {
     def isNative = true
   }
+
   case object _0 extends Formula {
     def isNative = true
   }
+  type _0 = _0.type
+
   case object _1 extends Formula {
     def isNative = true
   }
+  type _1 = _1.type
 
   object Negation {
     def apply(a: Formula): ¬ = ¬(a)

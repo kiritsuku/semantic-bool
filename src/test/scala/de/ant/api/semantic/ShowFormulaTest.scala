@@ -1,4 +1,4 @@
-package de.ant.semantic
+package de.ant.api.semantic
 
 import org.scalatest.FlatSpec
 import org.junit.runner.RunWith
@@ -8,7 +8,6 @@ import org.scalatest.junit.JUnitRunner
 class ShowFormulaTest extends FlatSpec {
 
   behavior of "function 'show'"
-  import de.ant.S._
 
   it should "shorten atom, 1, 0, ¬, ∨, ∧, →, ↔ and ⊕" in {
     assert(show('a) === "a")
@@ -46,6 +45,12 @@ class ShowFormulaTest extends FlatSpec {
     assert(show('a ∧ ('b ∨ 'c)) === "a(b ∨ c)")
     assert(show(('a ∧ 'b) ∨ 'c) === "ab ∨ c")
     assert(show('a ∨ ('b ∧ 'c)) === "a ∨ bc")
+  }
+
+  it should "not shorten combined ¬ with ∨, ∧" in {
+    assert(show(¬('a ∧ 'b ∧ 'c)) === "¬(abc)")
+    assert(show(¬(¬('a) ∨ 'b) ∨ 'b) === "¬(¬a ∨ b) ∨ b")
+    assert(show(¬(¬('a ∧ 'b ∧ 'c))) === "¬(¬(abc))")
   }
 
   it should "group nested formulas with parentheses" in {

@@ -1,7 +1,5 @@
-package de.ant.semantic
-
-import de.ant.semantic.formula.Formulas
-import de.ant.lib._
+package de.ant.semantic.formula
+import scalaz.syntax.id._
 
 trait SemanticBehavior extends Formulas {
 
@@ -30,7 +28,7 @@ trait SemanticBehavior extends Formulas {
   }
 
   def dnf(f: Formula): Formula = {
-    val (r, a) = (reduce(f), atoms(f))
+    val (r, a) = (normalize(f), atoms(f))
     ???
   }
 
@@ -45,18 +43,23 @@ trait SemanticBehavior extends Formulas {
     case a ⊕ b       => atoms(a) ++ atoms(b)
   }
 
-  def reduce(f: Formula): Formula = f match {
+  def normalize(f: Formula): Formula = f match {
     case Atom(_)         => f
-    case ¬(¬(f))         => reduce(f)
-    case ¬(f)            => ¬(reduce(f))
-    case a ∧ b if a == b => a
-    case a ∨ b if a == b => a
-    case a ∧ b           => reduce(a) ∧ reduce(b)
-    case a ∨ b           => reduce(a) ∨ reduce(b)
-    case a → b           => ¬(reduce(a)) ∨ reduce(b)
-    case a ↔ b           => (reduce(a), reduce(b)) |> { case (a, b) => ¬(a ∨ b) ∨ (a ∧ b) }
-    case a ⊕ b           => (reduce(a), reduce(b)) |> { case (a, b) => (¬(a) ∧ b) ∨ (a ∧ ¬(b)) }
+    case ¬(¬(f))         => normalize(f)
+    case ¬(f)            => ¬(normalize(f))
+    case a ∧ a_ if a == a_ => a
+    case a ∨ a_ if a == a_ => a
+
+    case (a ∧ b) ∨ (a_ ∧ ¬(b_)) if a == a_ && b == b_ => a
+
+    case a ∧ b           => normalize(a) ∧ normalize(b)
+    case a ∨ b           => normalize(a) ∨ normalize(b)
+    case a → b           => ¬(normalize(a)) ∨ normalize(b)
+    case a ↔ b           => (normalize(a), normalize(b)) |> { case (a, b) => (¬(a) ∧ ¬(b)) ∨ (a ∧ b) }
+    case a ⊕ b           => (normalize(a), normalize(b)) |> { case (a, b) => (¬(a) ∧ b) ∨ (a ∧ ¬(b)) }
   }
+
+  def reduce(f: Formula): Formula = ???
 
   def axioms(f: Formula): Formula = f match {
     case a ∨ `_0`                   => a
@@ -89,7 +92,8 @@ trait SemanticBehavior extends Formulas {
     case Atom(s)                           => s.name
     case `_0`                              => "0"
     case `_1`                              => "1"
-    case ¬(a)                              => s"¬${show(a)}"
+    case ¬(a @ (Atom(_) | `_0` | `_1`))    => s"¬${show(a)}"
+    case ¬(a)                              => s"¬(${show(a)})"
 
     case (a ∨ b) ∨ c                       => s"${show(a)} ∨ ${show(b)} ∨ ${show(c)}"
     case a ∨ (b ∨ c)                       => s"${show(a)} ∨ ${show(b)} ∨ ${show(c)}"
