@@ -4,67 +4,60 @@ import scala.util.parsing.combinator.JavaTokenParsers
 import de.ant.semantic.formula.Formulas
 import scalaz._, syntax.validation._, syntax.id._
 
-trait FormulaParsers extends JavaTokenParsers {
+trait FormulaParsers {
 
-  self: Formulas =>
+  this: Formulas =>
 
-  def parseFormula(in: String): Validation[String, Formula] =
-    parseAll(full, in) match {
-      case NoSuccess(msg, input) => error(msg, input).fail
-      case Success(a, _) => a.success
+  def parseFormula(in: String): Validation[String, Formula] = {
+    import parsers._
+
+    def error(msg: String, input: Input): String = {
+      val pos = input.pos.column - 1
+      val xs = Seq(msg, "\n\t", input.source, "\n\t", " " * pos, "^")
+      xs.mkString
     }
 
-  lazy val atom: Parser[Atom] =
-    "[a-zA-Z]".r ^^ (Symbol(_) |> Atom)
-
-  lazy val zero: Parser[_0] =
-    "0" ^^ (_ => _0)
-
-  lazy val one: Parser[_1] =
-    "1" ^^ (_ => _1)
-
-  lazy val negation: Parser[¬] =
-    "¬" ~> atom ^^ ¬
-
-  lazy val natives: Parser[Formula] =
-    negation | atom | zero | one
-
-  lazy val and: Parser[∧] =
-    binaryOp("")(∧) | binaryOp("[∧\\*]")(∧)
-
-  lazy val or: Parser[∨] =
-    binaryOp("[∨\\+]")(∨)
-
-  lazy val implies: Parser[→] =
-    binaryOp("→")(→)
-
-  lazy val equivalence: Parser[↔] =
-    binaryOp("↔")(↔)
-
-  lazy val antivalence: Parser[⊕] =
-    binaryOp("⊕")(⊕)
-
-  lazy val all: Parser[Formula] =
-    and | or | implies | equivalence | antivalence | natives
-
-  lazy val paren: Parser[Formula] =
-    "(" ~> all <~ ")"
-
-  lazy val full: Parser[Formula] =
-      all | paren
-
-  private def error(msg: String, input: Input): String = {
-    val pos = input.pos.column-1
-    val xs = Seq(msg, "\n\t", input.source, "\n\t", " "*pos, "^")
-    xs.mkString
+    parseAll(expr, in) match {
+      case NoSuccess(msg, input) => error(msg, input).fail
+      case Success(a, _)         => a.success
+    }
   }
 
-  private def binaryOp[A](rgx: String)(f: (A, Atom) => A): Parser[A] =
-    atom ~ rep1(rgx.r ~> atom) ^^ {
-      case a ~ xs => fold(f(a.asInstanceOf[A], xs.head), xs.tail)(f)
+  private object parsers extends JavaTokenParsers {
+
+    lazy val atom: Parser[Atom] =
+      "[a-zA-Z]".r ^^ (Symbol(_) |> Atom)
+
+    lazy val zero: Parser[_0] =
+      "0" ^^ (_ => _0)
+
+    lazy val one: Parser[_1] =
+      "1" ^^ (_ => _1)
+
+    lazy val expr: Parser[Formula] =
+      term ~ rep("""[∨\+→↔⊕]""".r ~ term) ^^ {
+        case f ~ Nil => f
+        case f1 ~ (s ~ f2 :: fs) => (formula(f1, s, f2) /: fs) {
+          case (f1, s ~ f2) => formula(f1, s, f2)
+        }
+      }
+
+    def formula(f1: Formula, s: String, f2: Formula) = s match {
+      case "∨" | "+" => f1 ∨ f2
+      case "→"       => f1 → f2
+      case "↔"       => f1 ↔ f2
+      case "⊕"       => f1 ⊕ f2
     }
 
-  private def fold[A](init: A, xs: List[Atom])(f: (A, Atom) => A): A =
-    (init /: xs) { (a, x) => f(a, x) }
+    lazy val term: Parser[Formula] =
+      factor ~ rep(("[∧\\*]".r | "") ~> factor) ^^ {
+        case f ~ Nil => f
+        case f ~ fs  => (f ∧ fs.head /: fs.tail) { (f1, f2) => f1 ∧ f2 }
+      }
 
+    lazy val factor: Parser[Formula] =
+      opt("¬") ~ ("(" ~> expr <~ ")" | zero | one | atom) ^^ {
+        case negation ~ expr => if (negation.isDefined) ¬(expr) else expr
+      }
+  }
 }

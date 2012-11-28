@@ -43,13 +43,14 @@ class FormulaParsersTest extends FlatSpec with FormulaParsers with SemanticBehav
 
   it should "parse parentheses" in {
     assert(show(formula("(ab)")) === "ab")
-//    assert(show(formula("(ab)(cd)")) === "abcd")
-//    assert(show(formula("((ab)c)d")) === "abcd")
-//    assert(show(formula("a(b(cd))")) === "abcd")
+    assert(show(formula("(((ab)))")) === "ab")
+    assert(show(formula("(ab)(cd)")) === "abcd")
+    assert(show(formula("((ab)c)d")) === "abcd")
+    assert(show(formula("a(b(cd))")) === "abcd")
   }
 
   it should "parse combinations of formulas" in {
-//    assert(show(formula("ab ∨ ab")) === "ab ∨ ab")
+    assert(show(formula("ab ∨ ab")) === "ab ∨ ab")
   }
 
   def formula(in: String): Formula =

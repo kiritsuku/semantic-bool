@@ -4,7 +4,16 @@ version := "0.1"
      
 scalaVersion := "2.10.0-RC2"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-Xlint")
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Xlint",
+  "-Xlog-reflective-calls",
+  "-Ywarn-adapted-args",
+  "-encoding", "UTF-8",
+  "-target:jvm-1.6"
+)
 
 libraryDependencies ++= Seq(
   "org.scalaz" % "scalaz-core_2.10.0-RC2" % "7.0.0-M4"
