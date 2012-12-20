@@ -51,8 +51,19 @@ class FormulaParsersTest extends FlatSpec with FormulaParsers with SemanticBehav
 
   it should "parse combinations of formulas" in {
     assert(show(formula("ab ∨ ab")) === "ab ∨ ab")
+    assert(show(formula("a¬b ∨ (ab → ¬de¬f)")) === "a¬b ∨ (ab → ¬de¬f)")
+    assert(show(formula("1∨(ab)↔(ab→(de))")) === "(1 ∨ ab) ↔ (ab → de)")
+  }
+
+  it should "return error message on invalid formulas" in {
+    assert(parse("¬").isFailure)
+    assert(parse("a ∨").isFailure)
+    assert(parse("→ a").isFailure)
+    assert(parse("(a))").isFailure)
+    assert(parse("((a)").isFailure)
+    assert(parse("()").isFailure)
   }
 
   def formula(in: String): Formula =
-    parseFormula(in).fold(sys.error, identity)
+    parse(in).fold(sys.error, identity)
 }

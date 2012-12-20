@@ -1,9 +1,14 @@
 package de.ant.api
 
 import scala.language.implicitConversions
-import de.ant.semantic.formula.Formulas
-import de.ant.semantic.formula.SemanticBehavior
 
-package object semantic extends Formulas with SemanticBehavior {
+import de.ant.semantic.formula.{Formulas, SemanticBehavior}
+import de.ant.semantic.parser.FormulaParsers
+
+package object semantic
+    extends Formulas
+    with SemanticBehavior
+    with FormulaParsers {
+
   implicit def symbolToAtom(sym: Symbol): Atom = Atom(sym)
 }

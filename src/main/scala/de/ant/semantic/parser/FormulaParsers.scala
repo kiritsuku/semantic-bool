@@ -4,11 +4,22 @@ import scala.util.parsing.combinator.JavaTokenParsers
 import de.ant.semantic.formula.Formulas
 import scalaz._, syntax.validation._, syntax.id._
 
+/**
+ * A simple parser for boolean algebra.
+ */
 trait FormulaParsers {
 
   this: Formulas =>
 
-  def parseFormula(in: String): Validation[String, Formula] = {
+  /**
+   * Parses the input and returns a formula if the input is valid or an error
+   * message otherwise.
+   *
+   * @param in the input to parse
+   *
+   * @return a validation containing the formula or a error message
+   */
+  def parse(in: String): Validation[String, Formula] = {
     import parsers._
 
     def error(msg: String, input: Input): String = {
@@ -23,6 +34,9 @@ trait FormulaParsers {
     }
   }
 
+  /**
+   * Internal object to keep the namespace clean.
+   */
   private object parsers extends JavaTokenParsers {
 
     lazy val atom: Parser[Atom] =
@@ -50,7 +64,7 @@ trait FormulaParsers {
     }
 
     lazy val term: Parser[Formula] =
-      factor ~ rep(("[∧\\*]".r | "") ~> factor) ^^ {
+      factor ~ rep(("""[∧\*]""".r | "") ~> factor) ^^ {
         case f ~ Nil => f
         case f ~ fs  => (f ∧ fs.head /: fs.tail) { (f1, f2) => f1 ∧ f2 }
       }

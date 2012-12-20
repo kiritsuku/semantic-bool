@@ -1,7 +1,7 @@
 package de.ant.semantic.formula
 
 trait Formulas {
-  sealed abstract class Formula {
+  sealed abstract class Formula extends NotNull {
     final def ∧(a: Formula) = new ∧(this, a)
     final def and(a: Formula) = ∧(a)
 
